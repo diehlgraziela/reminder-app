@@ -12,16 +12,16 @@
     <div>
       <span class="text-[10px]" :class="disabled ? 'text-neutral-400 line-through' : 'text-neutral-800'"> 08:00 </span>
 
-      <span class="text-[10px]" :class="disabled ? 'text-neutral-400' : 'text-neutral-800'"> | </span>
+      <span v-if="entity" class="text-[10px]" :class="disabled ? 'text-neutral-400' : 'text-neutral-800'"> | </span>
 
-      <span class="text-[10px] text-indigo-600" :class="disabled ? 'text-neutral-400 line-through' : ''"> Joãozinho da Silva </span>
+      <span v-if="entity" class="text-[10px] text-indigo-600" :class="disabled ? 'text-neutral-400 line-through' : ''"> {{ entity }} </span>
     </div>
 
     <ButtonGroup v-if="showActions" class="h-6 absolute -right-1 -bottom-1">
-      <Button variant="outline" size="icon" class="h-6" @click="deleteTask">
+      <Button variant="outline" size="icon" class="h-6" @click="emit('delete', props.reminder.id)">
         <Trash2 class="size-4 text-red-500" />
       </Button>
-      <Button variant="outline" size="icon" class="h-6" @click="editTask">
+      <Button variant="outline" size="icon" class="h-6" @click="emit('edit', props.reminder)">
         <Pencil class="size-4 text-indigo-500" />
       </Button>
     </ButtonGroup>
@@ -29,33 +29,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
 import { Trash2, Pencil } from "lucide-vue-next";
-import type { Reminder } from "@/types/Reminder";
+import type { ReminderPayload } from "@/types/Reminder";
 
 type Props = {
-  reminder: Reminder;
+  reminder: ReminderPayload;
 };
 
 type Emits = {
-  (e: "delete"): void;
-  (e: "edit"): void;
+  (e: "delete", id: number): void;
+  (e: "edit", reminder: ReminderPayload): void;
 };
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const showActions = ref<boolean>(false);
 
-function deleteTask() {
-  emit("delete");
-}
+const entity = computed(() => {
+  if (!props.reminder.entity_data) return undefined;
 
-function editTask() {
-  emit("edit");
-}
+  return props.reminder.entity_data?.name || "ChatID " + props.reminder.entityData.id;
+});
 </script>
 
 <style scoped>

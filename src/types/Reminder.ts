@@ -1,13 +1,21 @@
-export interface Reminder {
+export interface ReminderPayload {
+  id?: number;
   title: string;
-  scheduledAt: string;
-  entity: "chat" | "contact";
-  entityId: number;
-  notifyBeforeMinutes: 0;
+  scheduled_at: string;
+  entity: string;
+  entity_id: number;
+  notify_before_minutes: number;
 }
 
-export interface ReminderBody {
-  data: { id: number & Reminder }[];
+export interface ReminderResponse extends ReminderPayload {
+  entity_data: {
+    id: number;
+    name?: string;
+  };
+}
+
+export interface ReminderResponse {
+  data: ReminderResponse[];
   links: {
     first: string;
     last: string;

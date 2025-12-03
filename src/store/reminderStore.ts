@@ -1,16 +1,16 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-import type { Reminder, ReminderDate } from "@/types/Reminder";
+import type { ReminderPayload, ReminderDate } from "@/types/Reminder";
 import { reminderService } from "@/services/reminderService";
 
 export const useReminderStore = defineStore("reminder", () => {
-  const reminders = ref<Reminder[]>([]);
+  const reminders = ref<ReminderPayload[]>([]);
 
-  function setReminders(value: { id: number & Reminder }[]) {
+  function setReminders(value: ReminderPayload[]) {
     reminders.value = value;
   }
 
-  function getReminders(): Reminder[] {
+  function getReminders(): ReminderPayload[] {
     return reminders.value;
   }
 
@@ -26,8 +26,16 @@ export const useReminderStore = defineStore("reminder", () => {
     return res;
   }
 
-  async function createReminder(reminder: Reminder) {
+  async function createReminder(reminder: ReminderPayload) {
     return await reminderService.createReminder(reminder);
+  }
+
+  async function deleteReminder(id: number) {
+    const res = await reminderService.deleteReminder(id);
+
+    if (res.ok) {
+      setReminders(reminders.value.filter((reminder: ReminderPayload) => reminder.id !== id));
+    }
   }
 
   const state = {
@@ -38,6 +46,7 @@ export const useReminderStore = defineStore("reminder", () => {
     getReminders,
     fetchReminders,
     createReminder,
+    deleteReminder,
   };
 
   return {

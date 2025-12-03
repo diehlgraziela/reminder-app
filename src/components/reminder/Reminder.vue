@@ -29,12 +29,12 @@ import ReminderHeader, { type Day } from "./ReminderHeader.vue";
 import TaskForm from "../task/TaskForm.vue";
 import ReminderFooter from "./ReminderFooter.vue";
 import TaskList from "../task/TaskList.vue";
-import type { Reminder, ReminderDate } from "@/types/Reminder";
+import type { ReminderPayload, ReminderDate } from "@/types/Reminder";
 
 import { useReminderStore } from "@/store/reminderStore";
+import { atMidnight } from "@/utils/global";
 
 const reminderStore = useReminderStore();
-const selectedDay = ref<Day>("today");
 const showTaskForm = ref<boolean>(false);
 
 async function selectDay(payload: ReminderDate) {
@@ -49,10 +49,13 @@ function handleClose() {
   showTaskForm.value = false;
 }
 
-async function saveTask(data: Reminder) {
-  const res = await reminderStore.createReminder(data);
+async function saveTask(payload: ReminderPayload) {
+  const res = await reminderStore.createReminder(payload);
 
   if (res && res.ok) {
+    reminderStore.fetchReminders({
+      date: atMidnight(payload.scheduled_at),
+    });
     toggleTaskForm();
   }
 }

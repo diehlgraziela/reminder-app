@@ -6,7 +6,7 @@
 
     <div class="grid flex-1 gap-2">
       <div class="grid gap-1">
-        <Label for="title">Título</Label>
+        <Label>Título</Label>
         <Input v-model="formData.title" id="title" type="text" placeholder="Ex: Ligar para Pedro" />
       </div>
 
@@ -36,7 +36,7 @@
         </div>
         <div class="grid gap-1">
           <Label for="hour">Hora</Label>
-          <VueDatePicker v-model="formData.time" :locale="ptBR" :min-time="{ hours: new Date().getHours(), minutes: new Date().getMinutes() }" ref="timepicker" placeholder="00:00" model-type="HH:mm:ss" time-picker>
+          <VueDatePicker v-model="formData.time" :locale="ptBR" :min-time="minTime" ref="timepicker" placeholder="00:00" model-type="HH:mm:ss" time-picker>
             <template #input-icon>
               <Clock size="16" class="ml-2" />
             </template>
@@ -50,7 +50,7 @@
       </div>
 
       <div class="grid gap-1">
-        <Label for="title">Vincular chat/contato</Label>
+        <Label>Vincular chat/contato</Label>
         <Select v-model="formData.entityId">
           <SelectTrigger class="w-full">
             <SelectValue placeholder="Selecionar" />
@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from "vue";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -119,7 +119,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import { CalendarDays, Clock } from "lucide-vue-next";
 import { ptBR } from "date-fns/locale";
-import type { Reminder } from "@/types/Reminder";
+import type { ReminderPayload } from "@/types/Reminder";
 
 import { useEntityStore } from "@/store/entityStore";
 import { atMidnight } from "@/utils/global";
@@ -134,7 +134,7 @@ export type FormData = {
 };
 
 type Props = {
-  reminder?: Reminder;
+  reminder?: ReminderPayload;
 };
 
 type Emits = {
@@ -189,8 +189,20 @@ const timePickerRef = useTemplateRef("timepicker");
 const formData = ref<FormData>(defaultFormData);
 
 const isSaveDisabled = computed(() => {
-  // return formData.value.title.trim() === "" || formData.value.date === "" || formData.value.time === "" || formData.value.entity === "" || formData.value.notifyBeforeMinutes === undefined;
-  return false;
+  return formData.value.title.trim() === "" || formData.value.date === "" || formData.value.time === "" || formData.value.notifyBeforeMinutes === undefined;
+});
+
+const minTime = computed(() => {
+  if (new Date(formData.value.date) > new Date()) {
+    return null;
+  }
+
+  const now = new Date();
+
+  return {
+    hours: now.getHours(),
+    minutes: now.getMinutes(),
+  };
 });
 
 function isDateDisabled(date: Date) {
@@ -209,9 +221,12 @@ function applyTime() {
 function save() {
   if (isSaveDisabled.value) return;
 
-  const formattedData: Reminder = {
-    ...formData.value,
-    scheduledAt: `${formData.value.date} ${formData.value.time}`,
+  const formattedData: ReminderPayload = {
+    title: formData.value.title,
+    entity: formData.value.entityId ? formData.value.entity : null,
+    notify_before_minutes: formData.value.notifyBeforeMinutes,
+    entity_id: formData.value.entityId,
+    scheduled_at: `${formData.value.date} ${formData.value.time}`,
   };
 
   emit("save", formattedData);

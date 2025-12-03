@@ -78,6 +78,7 @@
   /* Datepicker */
   --dp-input-padding: 2px 30px 2px 12px !important;
   --dp-input-icon-padding: 28px !important;
+  --dp-border-radius: 8px !important;
 }
 
 .dark {
@@ -112,6 +113,10 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+.dp__theme_light {
+  --dp-border-color: #e5e5e5 !important;
 }
 
 @layer base {
