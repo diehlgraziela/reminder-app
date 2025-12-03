@@ -12,10 +12,8 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0',
-    port: 8080,
-    allowedHosts: [
-      '.localhost.com',
-    ]
-  }
+    host: "0.0.0.0",
+    port: 5173,
+    allowedHosts: [".localhost.com"],
+  },
 });
