@@ -1,0 +1,19 @@
+services:
+  frontend:
+    build:
+      context: ../..
+      dockerfile: docker/local/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+    networks:
+      - internal
+      - spa
+
+networks:
+  internal:
+    driver: bridge
+  spa:
+    external: true  
