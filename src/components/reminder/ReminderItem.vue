@@ -10,7 +10,7 @@
     </span>
 
     <div>
-      <span class="text-[10px]" :class="disabled ? 'text-neutral-400 line-through' : 'text-neutral-800'"> 08:00 </span>
+      <span class="text-[10px]" :class="disabled ? 'text-neutral-400 line-through' : 'text-neutral-800'"> {{ time }} </span>
 
       <span v-if="entity" class="text-[10px]" :class="disabled ? 'text-neutral-400' : 'text-neutral-800'"> | </span>
 
@@ -48,6 +48,13 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const showActions = ref<boolean>(false);
+
+const time = computed(() => {
+  return new Date(props.reminder.scheduled_at).toLocaleString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+});
 
 const entity = computed(() => {
   if (!props.reminder.entity_data) return undefined;

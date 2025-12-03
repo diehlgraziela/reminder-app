@@ -2,12 +2,13 @@ export interface ReminderPayload {
   id?: number;
   title: string;
   scheduled_at: string;
-  entity: string;
+  entity: "chat" | "contact";
   entity_id: number;
   notify_before_minutes: number;
 }
 
 export interface ReminderResponse extends ReminderPayload {
+  notify_at: string;
   entity_data: {
     id: number;
     name?: string;

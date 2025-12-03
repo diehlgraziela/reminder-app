@@ -119,10 +119,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import { CalendarDays, Clock } from "lucide-vue-next";
 import { ptBR } from "date-fns/locale";
-import type { ReminderPayload } from "@/types/Reminder";
+import type { ReminderPayload, ReminderResponse } from "@/types/Reminder";
 
 import { useEntityStore } from "@/store/entityStore";
 import { atMidnight } from "@/utils/global";
+import { useReminderStore } from "@/store/reminderStore";
 
 export type FormData = {
   title: string;
@@ -181,6 +182,7 @@ const timeLabels = {
 };
 
 const emit = defineEmits<Emits>();
+const props = defineProps<Props>();
 
 const entityStore = useEntityStore();
 
@@ -205,6 +207,30 @@ const minTime = computed(() => {
   };
 });
 
+watch(
+  () => props.reminder,
+  (reminder: ReminderResponse) => {
+    if (!reminder) return;
+
+    const { date, time } = parseScheduledAt(reminder.scheduled_at);
+    const notifyBefore = getDiffInMinutes(reminder.scheduled_at, reminder.notify_at);
+
+    const formattedEntityId = reminder.entity === "contact" ? String(reminder.entity_id) : reminder.entity_id;
+
+    formData.value = {
+      title: reminder.title,
+      date: date,
+      time: time,
+      entity: reminder.entity,
+      entityId: formattedEntityId ?? null,
+      notifyBeforeMinutes: notifyBefore,
+    };
+  },
+  {
+    immediate: true,
+  }
+);
+
 function isDateDisabled(date: Date) {
   const today = atMidnight(new Date());
   return atMidnight(date) < today;
@@ -218,10 +244,35 @@ function applyTime() {
   timePickerRef.value?.selectDate();
 }
 
+function parseScheduledAt(iso: string) {
+  const date = new Date(iso);
+
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+
+  const hh = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+
+  return {
+    date: `${yyyy}-${mm}-${dd}`,
+    time: `${hh}:${min}:00`,
+  };
+}
+
+function getDiffInMinutes(scheduledIso: string, notifyIso: string) {
+  const scheduled = new Date(scheduledIso);
+  const notify = new Date(notifyIso);
+
+  const diffMs = scheduled.getTime() - notify.getTime();
+  return Math.floor(diffMs / 60_000);
+}
+
 function save() {
   if (isSaveDisabled.value) return;
 
   const formattedData: ReminderPayload = {
+    id: props.reminder.id || undefined,
     title: formData.value.title,
     entity: formData.value.entityId ? formData.value.entity : null,
     notify_before_minutes: formData.value.notifyBeforeMinutes,

@@ -5,11 +5,13 @@ import type { ButtonVariants } from ".";
 import { Primitive } from "reka-ui";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from ".";
+import { Spinner } from "../spinner";
 
 interface Props extends PrimitiveProps {
   variant?: ButtonVariants["variant"];
   size?: ButtonVariants["size"];
   class?: HTMLAttributes["class"];
+  loading?: boolean;
   selected?: boolean;
 }
 
@@ -19,7 +21,8 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <Primitive data-slot="button" :as="as" :as-child="asChild" :class="cn(buttonVariants({ variant, size, selected }), props.class)">
+  <Primitive data-slot="button" :as="as" :as-child="asChild" :class="cn(buttonVariants({ variant, size, selected }), props.class)" :disabled="loading">
+    <Spinner v-if="loading" class="animate-spin" />
     <slot />
   </Primitive>
 </template>
