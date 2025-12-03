@@ -6,7 +6,7 @@
       </Button>
     </PopoverTrigger>
 
-    <PopoverContent align="end" :class="['p-0 h-[400px] flex transition-all duration-150 overflow-hidden', showTaskForm ? 'w-[620px]' : 'w-[310px]']">
+    <PopoverContent align="end" :class="['p-0 h-[400px] flex', showTaskForm ? 'w-[620px]' : 'w-[310px]']">
       <div class="flex flex-col flex-1 gap-4 p-4 reminder-container border-r border-r-neutral-200">
         <ReminderHeader />
 
