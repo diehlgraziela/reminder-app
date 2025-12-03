@@ -1,11 +1,17 @@
 <template>
   <ul class="tasks">
-    <Task v-for="i in 3" :key="i" :label="`Tarefa ${i}`" :disabled="i === 1" />
+    <template v-if="reminderStore.getReminders().length > 0">
+      <Task v-for="reminder in reminderStore.getReminders()" :key="reminder" :reminder="reminder" />
+    </template>
+    <p class="text-sm text-center text-neutral-700" v-else>Nenhum lembrete encontrado.</p>
   </ul>
 </template>
 
 <script setup lang="ts">
+import { useReminderStore } from "@/store/reminderStore";
 import Task from "./Task.vue";
+
+const reminderStore = useReminderStore();
 </script>
 
 <style scoped>

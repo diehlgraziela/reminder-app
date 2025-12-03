@@ -16,6 +16,7 @@
           <VueDatePicker
             v-model="formData.date"
             :locale="ptBR"
+            :disabled-dates="isDateDisabled"
             ref="datepicker"
             placeholder="00/00/00"
             model-type="yyyy-MM-dd"
@@ -24,6 +25,9 @@
               preview: 'dd/MM/yyyy',
             }"
           >
+            <template #input-icon>
+              <CalendarDays size="16" class="ml-2" />
+            </template>
             <template #action-buttons>
               <Button @click="applyDate">Aplicar</Button>
             </template>
@@ -32,7 +36,10 @@
         </div>
         <div class="grid gap-1">
           <Label for="hour">Hora</Label>
-          <VueDatePicker v-model="formData.time" :locale="ptBR" ref="timepicker" placeholder="00:00" model-type="HH:mm" time-picker>
+          <VueDatePicker v-model="formData.time" :locale="ptBR" :min-time="{ hours: new Date().getHours(), minutes: new Date().getMinutes() }" ref="timepicker" placeholder="00:00" model-type="HH:mm:ss" time-picker>
+            <template #input-icon>
+              <Clock size="16" class="ml-2" />
+            </template>
             <template #action-buttons>
               <Button @click="applyTime">Aplicar</Button>
             </template>
@@ -44,18 +51,18 @@
 
       <div class="grid gap-1">
         <Label for="title">Vincular chat/contato</Label>
-        <Select>
+        <Select v-model="formData.entityId">
           <SelectTrigger class="w-full">
             <SelectValue placeholder="Selecionar" />
           </SelectTrigger>
-          <SelectContent>
-            <div>
+          <SelectContent class="p-0">
+            <div class="border-b border-b-neutral-200 p-3">
               <Input placeholder="Buscar" />
             </div>
             <div class="flex">
               <div class="p-3 space-y-1 border-r border-r-neutral-200">
                 <p class="text-sm font-medium">Entidade</p>
-                <RadioGroup v-model="linkTo" default-value="chat">
+                <RadioGroup v-model="formData.entity" default-value="chat">
                   <div class="flex items-center gap-1">
                     <RadioGroupItem id="r1" value="chat" />
                     <Label for="r1">Chat</Label>
@@ -67,9 +74,12 @@
                 </RadioGroup>
               </div>
               <div class="p-3 space-y-1">
-                <p class="text-sm font-medium">Selecionar {{ linkTo === "chat" ? "chat" : "contato" }}</p>
-                <SelectGroup>
-                  <SelectItem value="none">Amanda Barbosa</SelectItem>
+                <p class="text-sm font-medium">Selecionar {{ formData.entity === "chat" ? "chat" : "contato" }}</p>
+                <SelectGroup v-if="formData.entity === 'chat'">
+                  <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
+                </SelectGroup>
+                <SelectGroup v-else>
+                  <SelectItem v-for="contact in entityStore.getContacts()" :value="contact.id">{{ contact.name }}</SelectItem>
                 </SelectGroup>
               </div>
             </div>
@@ -79,7 +89,7 @@
 
       <div class="grid gap-1">
         <Label>Lembrar em</Label>
-        <Select v-model="formData.remindAt">
+        <Select v-model="formData.notifyBeforeMinutes">
           <SelectTrigger class="w-full">
             <SelectValue placeholder="Selecionar" />
           </SelectTrigger>
@@ -94,7 +104,7 @@
 
     <div class="form-footer">
       <Button variant="ghost" @click="cancel">Cancelar</Button>
-      <Button :disabled="saveDisabled" @click="save"> Salvar </Button>
+      <Button :disabled="isSaveDisabled" @click="save"> Salvar </Button>
     </div>
   </div>
 </template>
@@ -109,17 +119,22 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import { CalendarDays, Clock } from "lucide-vue-next";
 import { ptBR } from "date-fns/locale";
+import type { Reminder } from "@/types/Reminder";
+
+import { useEntityStore } from "@/store/entityStore";
+import { atMidnight } from "@/utils/global";
 
 export type FormData = {
   title: string;
   date: string;
   time: string;
-  contact: string;
-  remindAt: number;
+  entity: string;
+  entityId: number | null;
+  notifyBeforeMinutes: number;
 };
 
 type Props = {
-  task?: any;
+  reminder?: Reminder;
 };
 
 type Emits = {
@@ -132,8 +147,9 @@ const defaultFormData: FormData = {
   title: "",
   date: "",
   time: "",
-  contact: "",
-  remindAt: 0,
+  entity: "chat",
+  entityId: null,
+  notifyBeforeMinutes: 0,
 };
 
 const remindAtOptions = [
@@ -166,14 +182,21 @@ const timeLabels = {
 
 const emit = defineEmits<Emits>();
 
+const entityStore = useEntityStore();
+
 const datePickerRef = useTemplateRef("datepicker");
 const timePickerRef = useTemplateRef("timepicker");
-const linkTo = ref<"contact" | "chat">("chat");
 const formData = ref<FormData>(defaultFormData);
 
-const saveDisabled = computed(() => {
-  return formData.value.title.trim() === "" || formData.value.date === "" || formData.value.time === "" || formData.value.contact === "" || formData.value.remindAt === undefined;
+const isSaveDisabled = computed(() => {
+  // return formData.value.title.trim() === "" || formData.value.date === "" || formData.value.time === "" || formData.value.entity === "" || formData.value.notifyBeforeMinutes === undefined;
+  return false;
 });
+
+function isDateDisabled(date: Date) {
+  const today = atMidnight(new Date());
+  return atMidnight(date) < today;
+}
 
 function applyDate() {
   datePickerRef.value?.selectDate();
@@ -183,14 +206,15 @@ function applyTime() {
   timePickerRef.value?.selectDate();
 }
 
-function selectRemindAt(value: number) {
-  formData.value.remindAt = value;
-}
-
 function save() {
-  if (saveDisabled.value) return;
+  if (isSaveDisabled.value) return;
 
-  emit("save", formData.value);
+  const formattedData: Reminder = {
+    ...formData.value,
+    scheduledAt: `${formData.value.date} ${formData.value.time}`,
+  };
+
+  emit("save", formattedData);
 }
 
 function cancel() {

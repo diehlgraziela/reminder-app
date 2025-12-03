@@ -1,5 +1,5 @@
 <template>
-  <Popover>
+  <Popover @update:open="handleClose">
     <PopoverTrigger as-child>
       <Button size="icon" variant="ghost">
         <CalendarDays />
@@ -8,7 +8,7 @@
 
     <PopoverContent align="end" :class="['p-0 h-[400px] flex', showTaskForm ? 'w-[620px]' : 'w-[310px]']">
       <div class="flex flex-col flex-1 gap-4 p-4 reminder-container border-r border-r-neutral-200">
-        <ReminderHeader />
+        <ReminderHeader @select-day="selectDay" />
 
         <TaskList />
 
@@ -22,28 +22,39 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import ReminderHeader, { type Day } from "./ReminderHeader.vue";
-import ReminderFooter from "./ReminderFooter.vue";
-import TaskForm, { type FormData } from "../task/TaskForm.vue";
-
+import { CalendarDays } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarDays } from "lucide-vue-next";
+import ReminderHeader, { type Day } from "./ReminderHeader.vue";
+import TaskForm from "../task/TaskForm.vue";
+import ReminderFooter from "./ReminderFooter.vue";
 import TaskList from "../task/TaskList.vue";
+import type { Reminder, ReminderDate } from "@/types/Reminder";
 
+import { useReminderStore } from "@/store/reminderStore";
+
+const reminderStore = useReminderStore();
 const selectedDay = ref<Day>("today");
 const showTaskForm = ref<boolean>(false);
 
-function selectDay(day: Day) {
-  selectedDay.value = day;
+async function selectDay(payload: ReminderDate) {
+  await reminderStore.fetchReminders(payload);
 }
 
 function toggleTaskForm() {
   showTaskForm.value = !showTaskForm.value;
 }
 
-function saveTask(data: FormData) {
-  toggleTaskForm();
+function handleClose() {
+  showTaskForm.value = false;
+}
+
+async function saveTask(data: Reminder) {
+  const res = await reminderStore.createReminder(data);
+
+  if (res && res.ok) {
+    toggleTaskForm();
+  }
 }
 </script>
 
