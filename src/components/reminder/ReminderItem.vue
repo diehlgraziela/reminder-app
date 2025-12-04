@@ -33,21 +33,25 @@ import { ref, computed } from "vue";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
 import { Trash2, Pencil } from "lucide-vue-next";
-import type { ReminderPayload } from "@/types/Reminder";
+import type { ReminderResponse } from "@/types/Reminder";
 
 type Props = {
-  reminder: ReminderPayload;
+  reminder: ReminderResponse;
 };
 
 type Emits = {
   (e: "delete", id: number): void;
-  (e: "edit", reminder: ReminderPayload): void;
+  (e: "edit", reminder: ReminderResponse): void;
 };
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const showActions = ref<boolean>(false);
+
+const disabled = computed(() => {
+  return props.reminder.is_notified;
+});
 
 const time = computed(() => {
   return new Date(props.reminder.scheduled_at).toLocaleString("pt-BR", {
