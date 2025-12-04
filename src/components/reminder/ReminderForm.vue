@@ -75,14 +75,14 @@
                 </div>
                 <div class="flex flex-col w-full p-3">
                   <p class="text-sm font-medium mb-2">Selecionar {{ formData.entity === "chat" ? "chat" : "contato" }}</p>
-                  <ScrollArea class="h-[400px]">
+                  <div ref="scrollarea" class="max-h-[300px] overflow-y-auto" @scroll="onScroll">
                     <SelectGroup v-if="formData.entity === 'chat'">
                       <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
                     </SelectGroup>
                     <SelectGroup v-else>
                       <SelectItem v-for="contact in entityStore.getContacts()" :value="contact.id">{{ contact.name }}</SelectItem>
                     </SelectGroup>
-                  </ScrollArea>
+                  </div>
                 </div>
               </div>
             </div>
@@ -97,9 +97,7 @@
             <SelectValue placeholder="Selecionar" />
           </SelectTrigger>
           <SelectContent>
-            <ScrollArea class="h-[100px]">
-              <SelectItem v-for="option in remindAtOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
-            </ScrollArea>
+            <SelectItem v-for="option in remindAtOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -113,13 +111,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch, nextTick } from "vue";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import { CalendarDays, Clock } from "lucide-vue-next";
 import { ptBR } from "date-fns/locale";
@@ -194,6 +191,11 @@ const datePickerRef = useTemplateRef("datepicker");
 const timePickerRef = useTemplateRef("timepicker");
 const formData = ref<FormData>(defaultFormData);
 const entityQuery = ref<string>("");
+const loadingNextPage = ref<boolean>(false);
+const entityPage = ref<Record<string, number>>({
+  contact: 1,
+  chat: 1,
+});
 
 const isSaveDisabled = computed(() => {
   return formData.value.title.trim() === "" || formData.value.date === "" || formData.value.time === "" || formData.value.notifyBeforeMinutes === undefined;
@@ -233,6 +235,14 @@ watch(
   },
   {
     immediate: true,
+  }
+);
+
+watch(
+  () => formData.value.entity,
+  () => {
+    entityPage.value[formData.value.entity] = 1;
+    entityQuery.value = "";
   }
 );
 
@@ -293,14 +303,40 @@ function cancel() {
   emit("cancel");
 }
 
+async function loadNextPage(entity: string) {
+  if (formData.value.entity === "contact") {
+    await entityStore.fetchContacts(entityQuery.value, entityPage.value[entity]++);
+  } else {
+    await entityStore.fetchChats(entityQuery.value, entityPage.value[entity]++);
+  }
+}
+
+async function onScroll(e: Event) {
+  console.log("scrolling");
+  const el = e.target as HTMLElement;
+
+  const scrollBottom = el.scrollTop + el.clientHeight;
+  const scrollHeight = el.scrollHeight;
+
+  if (scrollBottom >= scrollHeight - 20 && !loadingNextPage.value) {
+    loadingNextPage.value = true;
+
+    await loadNextPage(formData.value.entity);
+
+    loadingNextPage.value = false;
+  }
+}
+
 const searchEntity = debounce(async (e) => {
   e.preventDefault();
   e.stopPropagation();
 
+  entityPage.value[formData.value.entity] = 1;
+
   if (formData.entity === "contact") {
-    entityStore.fetchContacts(entityQuery.value);
+    entityStore.fetchContacts(entityQuery.value, 0);
   } else {
-    entityStore.fetchChats(entityQuery.value);
+    entityStore.fetchChats(entityQuery.value, 0);
   }
 }, 300);
 </script>
