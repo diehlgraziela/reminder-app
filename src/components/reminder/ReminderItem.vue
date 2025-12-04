@@ -18,10 +18,10 @@
     </div>
 
     <ButtonGroup v-if="showActions" class="h-6 absolute -right-1 -bottom-1">
-      <Button variant="outline" size="icon" class="h-6" @click="emit('delete', props.reminder.id)">
+      <Button :disabled="props.reminder.is_notified" variant="outline" size="icon" class="h-6" @click="emit('delete', props.reminder.id)">
         <Trash2 class="size-4 text-red-500" />
       </Button>
-      <Button variant="outline" size="icon" class="h-6" @click="emit('edit', props.reminder)">
+      <Button :disabled="props.reminder.is_notified" variant="outline" size="icon" class="h-6" @click="emit('edit', props.reminder)">
         <Pencil class="size-4 text-indigo-500" />
       </Button>
     </ButtonGroup>
@@ -63,7 +63,7 @@ const time = computed(() => {
 const entity = computed(() => {
   if (!props.reminder.entity_data) return undefined;
 
-  return props.reminder.entity_data?.name || "ChatID " + props.reminder.entityData.id;
+  return props.reminder.entity_data?.name || "ChatID " + props.reminder.entityData?.id;
 });
 </script>
 

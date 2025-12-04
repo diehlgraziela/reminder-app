@@ -19,8 +19,10 @@ import { toast } from "vue-sonner";
 import { Toaster } from "vue-sonner";
 import echo from "@/services/echo";
 import { useUserStore } from "@/store/userStore";
+import { useReminderStore } from "@/store/reminderStore";
 
 const userStore = useUserStore();
+const reminderStore = useReminderStore();
 
 onMounted(() => {
   const user = userStore.getUser();
@@ -37,6 +39,8 @@ onMounted(() => {
           'minute': '2-digit',
         })}`,
       });
+      
+      reminderStore.addOrUpdateReminder(e);
     });
 });
 </script>

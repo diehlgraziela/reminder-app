@@ -130,6 +130,7 @@ export const useReminderStore = defineStore("reminder", () => {
     setReminders,
     setReminder,
     getReminder,
+    addOrUpdateReminder,
   };
 
   return {
