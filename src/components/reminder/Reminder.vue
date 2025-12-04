@@ -7,10 +7,10 @@
     </PopoverTrigger>
 
     <PopoverContent align="end" :class="['p-0 h-[400px] flex', showReminderForm ? 'w-[620px]' : 'w-[310px]']">
-      <div class="flex flex-col flex-1 gap-4 p-4 reminder-container border-r border-r-neutral-200">
+      <div class="flex flex-col flex-1 gap-4 py-3 reminder-container border-r border-r-neutral-200">
         <ReminderHeader @select-day="selectDay" />
 
-        <ReminderList @edit="showReminderForm = true" />
+        <ReminderList @edit="showReminderForm = true" :selected-day="selectedDay" />
 
         <ReminderFooter :disabled="showReminderForm" @create-reminder="toggleReminderForm" />
       </div>
@@ -29,20 +29,26 @@ import ReminderHeader from "./ReminderHeader.vue";
 import ReminderForm from "./ReminderForm.vue";
 import ReminderFooter from "./ReminderFooter.vue";
 import ReminderList from "./ReminderList.vue";
-import type { ReminderPayload, ReminderDate } from "@/types/Reminder";
+import type { ReminderPayload, ReminderFilter } from "@/types/Reminder";
 
 import { useReminderStore } from "@/store/reminderStore";
-import { getFormattedDate } from "@/utils/global";
 
 const reminderStore = useReminderStore();
 const showReminderForm = ref<boolean>(false);
+const selectedDay = ref<ReminderFilter>();
 
-async function selectDay(payload: ReminderDate) {
+async function selectDay(payload: ReminderFilter) {
   await reminderStore.fetchReminders(payload);
+
+  selectedDay.value = payload;
 }
 
 function toggleReminderForm() {
   showReminderForm.value = !showReminderForm.value;
+
+  if (!showReminderForm.value) {
+    reminderStore.setReminder(null);
+  }
 }
 
 function handleClose() {
@@ -59,10 +65,6 @@ async function saveTask(payload: ReminderPayload) {
   }
 
   if (res && res.ok) {
-    await reminderStore.fetchReminders({
-      date: getFormattedDate(new Date(payload.scheduled_at), true),
-    });
-
     toggleReminderForm();
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-between items-center">
+  <div class="flex justify-between items-center px-3">
     <div class="flex gap-1">
       <template v-for="option in dateOptions" :key="option.id">
         <VueDatePicker ref="datepicker" v-if="option.icon" v-model="selectedDateRange" :locale="ptBR" range>
@@ -26,13 +26,13 @@
 </template>
 
 <script setup lang="ts">
+import { ref, useTemplateRef, onMounted } from "vue";
 import { CircleQuestionMark, CalendarDays } from "lucide-vue-next";
-import { ref, useTemplateRef } from "vue";
 import { Button } from "@/components/ui/button";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import { ptBR } from "date-fns/locale";
 import { format } from "date-fns";
-import type { ReminderDate } from "@/types/Reminder";
+import type { ReminderFilter } from "@/types/Reminder";
 import { getFormattedDate } from "@/utils/global";
 
 export type Day = "today" | "tomorrow" | "custom";
@@ -43,7 +43,7 @@ type DateOption = {
 };
 
 type Emits = {
-  (e: "selectDay", payload: ReminderDate): void;
+  (e: "selectDay", payload: ReminderFilter): void;
   (e: "showPicker", show: boolean): void;
 };
 
@@ -109,6 +109,10 @@ function applyDate() {
   datePickerRef.value?.[0]?.selectDate();
   selectDay("custom");
 }
+
+onMounted(() => {
+  selectDay("today");
+});
 </script>
 
 <style scoped></style>

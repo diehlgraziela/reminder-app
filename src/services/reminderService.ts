@@ -1,16 +1,16 @@
 import { http } from "./http";
 import type { ApiResponse } from "./http";
-import type { Reminder, ReminderDate } from "@/types/Reminder";
+import type { ReminderFilter } from "@/types/Reminder";
 
 export const reminderService = {
-  async getReminders(payload: ReminderDate): Promise<ApiResponse<ReminderResponse>> {
-    let query = "";
+  async getReminders(payload: ReminderFilter): Promise<ApiResponse<ReminderResponse>> {
+    let query = "?groupBy=day";
 
     if (payload?.date) {
-      query += `?date=${payload.date}`;
+      query += `&date=${payload.date}`;
     }
     if (payload?.from) {
-      query += `?from=${payload.from}`;
+      query += `&from=${payload.from}`;
     }
     if (payload?.to) {
       query += `&to=${payload.to}`;

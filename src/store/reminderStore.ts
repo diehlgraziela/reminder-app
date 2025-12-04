@@ -1,12 +1,10 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-import type { ReminderPayload, ReminderDate } from "@/types/Reminder";
+import type { ReminderPayload, ReminderFilter } from "@/types/Reminder";
 import { reminderService } from "@/services/reminderService";
 
-type ReminderMap = Record<string, ReminderPayload[]>;
-
 export const useReminderStore = defineStore("reminder", () => {
-  const reminders = ref<ReminderPayload[]>([]);
+  const reminders = ref<Record<string, ReminderPayload[]>>([]);
   const loadingReminders = ref<boolean>(false);
   const reminder = ref<ReminderPayload | null>(null);
 
@@ -26,7 +24,23 @@ export const useReminderStore = defineStore("reminder", () => {
     return reminder.value;
   }
 
-  async function fetchReminders(payload: ReminderDate) {
+  function addOrUpdateReminder(reminderData: ReminderPayload) {
+    const date = reminderData.scheduled_at.split("T")[0];
+
+    if (!reminders.value[date]) {
+      reminders.value[date] = [];
+    }
+
+    const existingIndex = reminders.value[date].findIndex((r) => r.id === reminderData.id);
+
+    if (existingIndex !== -1) {
+      reminders.value[date][existingIndex] = reminderData;
+    } else {
+      reminders.value[date].push(reminderData);
+    }
+  }
+
+  async function fetchReminders(payload: ReminderFilter) {
     const res = await reminderService.getReminders(payload);
 
     if (res.ok && res.data) {
@@ -54,11 +68,23 @@ export const useReminderStore = defineStore("reminder", () => {
   }
 
   async function createReminder(reminder: ReminderPayload) {
-    return await reminderService.createReminder(reminder);
+    const res = await reminderService.createReminder(reminder);
+
+    if (res.ok && res.data) {
+      addOrUpdateReminder(res.data.data);
+    }
+
+    return res;
   }
 
   async function updateReminder(reminder: ReminderPayload) {
-    return await reminderService.updateReminder(reminder);
+    const res = await reminderService.updateReminder(reminder);
+
+    if (res.ok && res.data) {
+      addOrUpdateReminder(res.data.data);
+    }
+
+    return res;
   }
 
   async function deleteReminder(id: number) {

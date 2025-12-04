@@ -1,5 +1,5 @@
 <template>
-  <div class="reminder-footer">
+  <div class="px-3">
     <Button class="w-full" :disabled="disabled" @click="createReminder"> Criar lembrete </Button>
   </div>
 </template>

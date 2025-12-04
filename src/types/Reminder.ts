@@ -31,8 +31,9 @@ export interface ReminderResponse {
   };
 }
 
-export interface ReminderDate {
+export interface ReminderFilter {
   date?: string;
   from?: string;
   to?: string;
+  groupBy?: "day";
 }

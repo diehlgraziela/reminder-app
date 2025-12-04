@@ -272,7 +272,7 @@ function save() {
   if (isSaveDisabled.value) return;
 
   const formattedData: ReminderPayload = {
-    id: props.reminder.id || undefined,
+    id: props.reminder?.id || undefined,
     title: formData.value.title,
     entity: formData.value.entityId ? formData.value.entity : null,
     notify_before_minutes: formData.value.notifyBeforeMinutes,
