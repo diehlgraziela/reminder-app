@@ -25,19 +25,27 @@ export const useReminderStore = defineStore("reminder", () => {
   }
 
   function addOrUpdateReminder(reminderData: ReminderPayload) {
-    const date = reminderData.scheduled_at.split("T")[0];
+    const newDate = reminderData.scheduled_at.split("T")[0];
 
-    if (!reminders.value[date]) {
-      reminders.value[date] = [];
+    for (const date in reminders.value) {
+      const index = reminders.value[date].findIndex((r) => r.id === reminderData.id);
+
+      if (index !== -1) {
+        reminders.value[date].splice(index, 1);
+
+        if (reminders.value[date].length === 0) {
+          delete reminders.value[date];
+        }
+
+        break;
+      }
     }
 
-    const existingIndex = reminders.value[date].findIndex((r) => r.id === reminderData.id);
-
-    if (existingIndex !== -1) {
-      reminders.value[date][existingIndex] = reminderData;
-    } else {
-      reminders.value[date].push(reminderData);
+    if (!reminders.value[newDate]) {
+      reminders.value[newDate] = [];
     }
+
+    reminders.value[newDate].push(reminderData);
   }
 
   async function fetchReminders(payload: ReminderFilter) {
@@ -91,7 +99,19 @@ export const useReminderStore = defineStore("reminder", () => {
     const res = await reminderService.deleteReminder(id);
 
     if (res.ok) {
-      setReminders(reminders.value.filter((reminder: ReminderPayload) => reminder.id !== id));
+      for (const date in reminders.value) {
+        const index = reminders.value[date].findIndex((r) => r.id === id);
+
+        if (index !== -1) {
+          reminders.value[date].splice(index, 1);
+
+          if (reminders.value[date].length === 0) {
+            delete reminders.value[date];
+          }
+
+          break;
+        }
+      }
     }
   }
 
