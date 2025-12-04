@@ -2,10 +2,22 @@ import { http } from "./http";
 import type { ApiResponse } from "./http";
 
 export const entityService = {
-  async getContacts(): Promise<ApiResponse<any[]>> {
-    return await http.request("GET", "/huggy/contacts");
+  async getContacts(query?: string): Promise<ApiResponse<any[]>> {
+    let params = "";
+
+    if (query) {
+      params = `?q=${query}`;
+    }
+
+    return await http.request("GET", `/huggy/contacts${params}`);
   },
-  async getChats(): Promise<ApiResponse<any[]>> {
-    return await http.request("GET", "/huggy/chats");
+  async getChats(id?: number): Promise<ApiResponse<any[]>> {
+    let param = "?situation=in_chat";
+
+    if (id) {
+      param += `&q=${id}`;
+    }
+
+    return await http.request("GET", `/huggy/chats${param}`);
   },
 };

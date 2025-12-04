@@ -22,8 +22,8 @@ export const useEntityStore = defineStore("entity", () => {
     return chats.value;
   }
 
-  async function fetchContacts() {
-    const res = await entityService.getContacts();
+  async function fetchContacts(query?: string) {
+    const res = await entityService.getContacts(query);
 
     if (res.ok && res.data) {
       setContacts(res.data);
@@ -34,8 +34,8 @@ export const useEntityStore = defineStore("entity", () => {
     return res;
   }
 
-  async function fetchChats() {
-    const res = await entityService.getChats();
+  async function fetchChats(id?: number) {
+    const res = await entityService.getChats(id);
 
     if (res.ok && res.data) {
       setChats(res.data);

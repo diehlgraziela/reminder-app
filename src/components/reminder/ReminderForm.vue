@@ -44,7 +44,6 @@
               <Button @click="applyTime">Aplicar</Button>
             </template>
             <template #action-preview></template>
-            <template #top-extra>teste</template>
           </VueDatePicker>
         </div>
       </div>
@@ -55,32 +54,40 @@
           <SelectTrigger class="w-full">
             <SelectValue placeholder="Selecionar" />
           </SelectTrigger>
-          <SelectContent class="p-0">
-            <div class="border-b border-b-neutral-200 p-3">
-              <Input placeholder="Buscar" />
-            </div>
-            <div class="flex">
-              <div class="p-3 space-y-1 border-r border-r-neutral-200">
-                <p class="text-sm font-medium">Entidade</p>
-                <RadioGroup v-model="formData.entity" default-value="chat">
-                  <div class="flex items-center gap-1">
-                    <RadioGroupItem id="r1" value="chat" />
-                    <Label for="r1">Chat</Label>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <RadioGroupItem id="r2" value="contact" />
-                    <Label for="r2">Contato</Label>
-                  </div>
-                </RadioGroup>
+          <SelectContent class="p-0" disable-type-ahead>
+            <div class="flex flex-col overflow-y-hidden">
+              <div class="border-b border-b-neutral-200 p-3">
+                <Input v-model="entityQuery" @input="searchEntity" placeholder="Buscar" @keydown.stop />
               </div>
-              <div class="p-3 space-y-1">
-                <p class="text-sm font-medium">Selecionar {{ formData.entity === "chat" ? "chat" : "contato" }}</p>
-                <SelectGroup v-if="formData.entity === 'chat'">
-                  <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
-                </SelectGroup>
-                <SelectGroup v-else>
-                  <SelectItem v-for="contact in entityStore.getContacts()" :value="contact.id">{{ contact.name }}</SelectItem>
-                </SelectGroup>
+              <div class="flex flex-1 h-full">
+                <div class="p-3 space-y-1 border-r border-r-neutral-200 flex-1">
+                  <p class="text-sm font-medium mb-2">Entidade</p>
+                  <RadioGroup v-model="formData.entity" default-value="chat">
+                    <div class="flex items-center gap-1 mt-1.5">
+                      <RadioGroupItem id="r1" value="chat" />
+                      <Label for="r1">Chat</Label>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <RadioGroupItem id="r2" value="contact" />
+                      <Label for="r2">Contato</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div class="flex flex-col w-full p-3">
+                  <p class="text-sm font-medium mb-2">Selecionar {{ formData.entity === "chat" ? "chat" : "contato" }}</p>
+                  <ScrollArea class="h-[400px]">
+                    <SelectGroup v-if="formData.entity === 'chat'">
+                      <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
+                      <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
+                      <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
+                      <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
+                      <SelectItem v-for="chat in entityStore.getChats()" :value="chat.id">{{ chat.id }}</SelectItem>
+                    </SelectGroup>
+                    <SelectGroup v-else>
+                      <SelectItem v-for="contact in entityStore.getContacts()" :value="contact.id">{{ contact.name }}</SelectItem>
+                    </SelectGroup>
+                  </ScrollArea>
+                </div>
               </div>
             </div>
           </SelectContent>
@@ -94,9 +101,9 @@
             <SelectValue placeholder="Selecionar" />
           </SelectTrigger>
           <SelectContent>
-            <SelectGroup>
+            <ScrollArea class="h-[100px]">
               <SelectItem v-for="option in remindAtOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
-            </SelectGroup>
+            </ScrollArea>
           </SelectContent>
         </Select>
       </div>
@@ -110,20 +117,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { computed, ref, useTemplateRef, watch, nextTick } from "vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import { CalendarDays, Clock } from "lucide-vue-next";
 import { ptBR } from "date-fns/locale";
+import debounce from "lodash/debounce";
 import type { ReminderPayload, ReminderResponse } from "@/types/Reminder";
 
 import { useEntityStore } from "@/store/entityStore";
 import { atMidnight } from "@/utils/global";
-import { useReminderStore } from "@/store/reminderStore";
 
 export type FormData = {
   title: string;
@@ -189,6 +197,7 @@ const entityStore = useEntityStore();
 const datePickerRef = useTemplateRef("datepicker");
 const timePickerRef = useTemplateRef("timepicker");
 const formData = ref<FormData>(defaultFormData);
+const entityQuery = ref<string>("");
 
 const isSaveDisabled = computed(() => {
   return formData.value.title.trim() === "" || formData.value.date === "" || formData.value.time === "" || formData.value.notifyBeforeMinutes === undefined;
@@ -287,6 +296,17 @@ function cancel() {
   formData.value = defaultFormData;
   emit("cancel");
 }
+
+const searchEntity = debounce(async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (formData.entity === "contact") {
+    entityStore.fetchContacts(entityQuery.value);
+  } else {
+    entityStore.fetchChats(entityQuery.value);
+  }
+}, 300);
 </script>
 
 <style scoped>
